@@ -11,29 +11,38 @@ import (
 )
 
 var (
-	db       *gorm.DB
-	err      error
+	db  *gorm.DB
+	err error
 )
 
 func StartDB() {
-	host     := os.Getenv("DB_HOST")
-	user     := os.Getenv("DB_USER")
+	host := os.Getenv("DB_HOST")
+	user := os.Getenv("DB_USER")
 	password := os.Getenv("DB_PASSWORD")
-	dbPort   := os.Getenv("DB_PORT")
-	dbname   := os.Getenv("DB_NAME")
+	dbPort := os.Getenv("DB_PORT")
+	dbname := os.Getenv("DB_NAME")
 
 	// db config
-	config := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", host, user, password, dbname, dbPort)
-	dsn := config
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		user, password, host, dbPort, dbname,
+	)
 	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
 	if err != nil {
 		log.Fatal("error connecting to database :", err)
 	}
 
-	fmt.Println("sucessfully connected to database")
-	db.Debug().AutoMigrate(models.Activity{}, models.Scheduler{}, models.Jobs{}, models.Logs{})
+	fmt.Println("successfully connected to database")
 }
+
+func RunMigrations() {
+	if db == nil {
+		log.Fatal("database connection is not initialized")
+	}
+	db.Debug().AutoMigrate(models.Activity{}, models.Scheduler{}, models.Jobs{}, models.Log{})
+	fmt.Println("migrations completed successfully")
+}
+
 func GetDB() *gorm.DB {
 	return db
 }
